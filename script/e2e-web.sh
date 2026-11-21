@@ -284,23 +284,29 @@ assert s["phase"] == "play" and len(s["yourHand"]) == 5, (s["phase"], s["yourHan
 print("e2e-web: scenario B discard over HTTP ok")
 
 # drive the whole hand: every south decision point gets the first legal card
+# (the snapshot can jump straight from hand_over to hand 2's first bid, so the
+# final trick count must be remembered from the last poll that still had it)
+seen_tricks = 0
 for _ in range(400):
     s = state()
+    seen_tricks = max(seen_tricks, s["tricks"]["ns"] + s["tricks"]["ew"])
     if s["hand"] != 1 or s["phase"] in ("hand_over", "game_over") or \
        (s["tricks"]["ns"] + s["tricks"]["ew"]) == 5:
         break
     if s["bidding"]["active"] and s["bidding"].get("promptTo") == "south":
         code, body = post("/api/bid", {"decision": "pass"})
         assert code == 200, (code, body)
+        seen_tricks = max(seen_tricks, body["tricks"]["ns"] + body["tricks"]["ew"])
     elif s["phase"] == "play" and s.get("turn") == "south":
         assert s["legal"], s
         code, body = post("/api/play", {"card": s["legal"][0]})
         assert code == 200, (code, body)
+        seen_tricks = max(seen_tricks, body["tricks"]["ns"] + body["tricks"]["ew"])
     time.sleep(0.1)
 else:
     raise SystemExit("hand never completed")
 
-assert s["tricks"]["ns"] + s["tricks"]["ew"] == 5, s["tricks"]
+assert seen_tricks == 5, s["tricks"]
 print(f"e2e-web: scenario B hand 1 fully driven via HTTP (tricks {s['tricks']})")
 EOF
 
