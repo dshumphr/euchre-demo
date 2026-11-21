@@ -1,0 +1,7 @@
+# hand 1, seed 7, dealer south: round 1 sweeps, east calls clubs in round 2
+bid pass
+play KD
+play KS
+play TH
+play 9S
+play QS

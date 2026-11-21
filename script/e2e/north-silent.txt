@@ -1,0 +1,3 @@
+# fake agent claims the north seat, then goes silent for the whole game
+# (exercises the app timeout fallback: the built-in bot must play North)
+claim

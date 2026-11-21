@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Euchre</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header id="status-bar">
+    <span id="conn-dot" class="dot off" title="connection"></span>
+    <span id="status-info"></span>
+  </header>
+
+  <main>
+    <div id="table">
+      <div id="seat-north" class="seatpos sp-north"></div>
+      <div id="seat-west"  class="seatpos sp-west"></div>
+      <div id="center"     class="seatpos sp-center"></div>
+      <div id="seat-east"  class="seatpos sp-east"></div>
+      <div id="seat-south" class="seatpos sp-south"></div>
+    </div>
+    <aside id="side">
+      <div id="tips" class="panel"></div>
+      <div id="log" class="panel"></div>
+    </aside>
+  </main>
+
+  <footer id="bottom">
+    <div id="action"></div>
+    <div id="hand"></div>
+  </footer>
+
+  <div id="overlay"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

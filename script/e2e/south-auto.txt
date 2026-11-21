@@ -1,0 +1,2 @@
+# south hands the wheel to the built-in bot for the whole match
+auto

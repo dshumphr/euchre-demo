@@ -1,0 +1,32 @@
+{
+  "v": 1,
+  "id": "01EUCHRECONTRACT0000000001",
+  "ts": "2026-11-20T00:00:00.000Z",
+  "src": "app:euchre",
+  "type": "stream.contract",
+  "body": {
+    "name": "euchre",
+    "about": "Terminal euchre match: the user plays South; you (the attached agent) can claim any of the other three seats — North (the user's partner), East and West (the opponents), or all three at once. Standard rules — 24 cards (9-A), trump bidding with bowers, going alone, first team to 10 points. You bid and play every claimed seat's cards each turn and coach the user after each hand.",
+    "emits": {
+      "game.started": {"dealer": "south", "youAre": "south"},
+      "deal.your_hand": {"seat": "north", "cards": ["JH", "JD", "AH", "KS", "9D"]},
+      "bid.prompt": {"topCard": "TH", "dealer": "south", "round": 1, "turn": "west"},
+      "bid.made": {"seat": "north", "decision": "order_up", "trump": "H"},
+      "trick.started": {"leader": "west", "trump": "H"},
+      "card.played": {"seat": "north", "card": "JD", "trickNo": 0},
+      "trick.won": {"seat": "north", "pointsNSE": 1},
+      "hand.summary": {"scoreNSE": [3, 1], "tricksNSE": [3, 2], "dealer": "south", "goingAlone": {"seat": "south"}, "bids": [{"seat": "north", "decision": "order_up", "alone": false}], "tricks": [{"lead": "west", "plays": [["west", "TD"], ["north", "JD"], ["east", "9C"], ["south", "AH"]], "winner": "north"}]},
+      "game.over": {"winner": "north-south"},
+      "action.rejected": {"action": "euchre.play", "reason": "card KC not in north's hand", "cards": ["JD", "9C", "AH", "KS", "TC"]}
+    },
+    "accepts": {
+      "euchre.bid": {"decision": "order_up", "goingAlone": false},
+      "euchre.play": {"card": "JD"},
+      "euchre.claim_seat": {"seats": ["north", "east", "west"]},
+      "euchre.hand_request": {"seat": "east"},
+      "euchre.tip": {"text": "Your AH was boss — leading it would have drawn out the left bower."},
+      "euchre.resign": {}
+    },
+    "instructions": "You are attached to a live terminal euchre game. The user plays South; heuristic bots play the other seats until you claim them. euchre.claim_seat takes either {seat: \"north\"} or {seats: [\"north\", \"east\", \"west\"]} — claims are additive and idempotent per seat and can arrive any time (a mid-hand claim takes effect at that seat's next decision point); add \"release\": true to hand claimed seats back to their bots. South is the human's seat and cannot be claimed. Each claimed seat's hand is disclosed as deal.your_hand {seat, cards} at the next decision point and re-dealt every hand; euchre.hand_request {seat} re-emits it any time. game.started carries no hand: South's cards are visible in the app's TUI and never on the stream — only claimed seats' hands are disclosed, as deal.your_hand. When bid.prompt arrives and body.turn is a claimed seat, send euchre.bid {decision: \"order_up\"|\"pass\"|\"C\"|\"D\"|\"H\"|\"S\", goingAlone?} — order_up is round 1 only (take the top card's suit; the dealer then discards), a suit letter is round 2 only (any suit except the turned-down card). When trick.started/card.played show a claimed seat's turn (seats act clockwise south→west→north→east; the app emits card.played for each seat and action.rejected if you err), send euchre.play {card: \"JD\"} with a card from that seat's hand; the left bower (jack of the same color as trump) counts as trump, and the seat must follow the led suit when it can. A rejected euchre.play or euchre.bid carries that seat's CURRENT hand in body.cards — resend using one of those cards; no euchre.hand_request round-trip is needed. When a claimed seat is the dealer and someone orders up, send euchre.play {card} to discard one card from that seat's six-card hand (the discard phase). After every hand.summary event, send euchre.tip {text} with a short coaching note for the user (one or two sentences: what the bidding or a key play says, what to try next hand) — that is your post-hand coaching; euchre.tip is agent-only and renders in the app's tips panel. euchre.resign concedes the match. The user asks their questions in YOUR harness chat, not in the game — no chat text of yours is rendered in the app except euchre.tip bodies. Keep euchre.play/bid responses prompt: a claimed seat the app has not heard from for over 30 seconds falls back to its built-in bot."
+  }
+}

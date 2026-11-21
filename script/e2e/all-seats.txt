@@ -1,0 +1,30 @@
+# Scenario C: the fake agent claims ALL THREE non-human seats (north, east,
+# west) in one euchre.claim_seat and plays every one of them. Seed 11, dealer
+# south: west/north/east pass, the built-in bot orders up clubs for South and
+# discards KD; tricks go W-N-S-N-S for NS 4 / EW 1, makers (NS) score 1.
+#
+# The play lines are the claimed seats' cards in exact acting order (derived
+# from the rules engine with seed 11 — see the e2e.sh header). "hand east"
+# exercises euchre.hand_request: the app re-emits east's deal.your_hand.
+claim north,east,west
+hand east
+bid pass
+bid pass
+bid pass
+play AS
+play KS
+play 9S
+play JH
+play 9H
+play QH
+play 9C
+play JC
+play 9D
+play AD
+play TD
+play JD
+play TH
+play QD
+play QS
+tip Your JC was the right bower — leading it set up the AD later in the hand.
+resign
