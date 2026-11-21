@@ -306,8 +306,12 @@ for _ in range(400):
 else:
     raise SystemExit("hand never completed")
 
-assert seen_tricks == 5, s["tricks"]
-print(f"e2e-web: scenario B hand 1 fully driven via HTTP (tricks {s['tricks']})")
+# The web app deals the next hand the instant a hand scores: the hand-end
+# snapshot (full tricks) is published only briefly before hand 2's first
+# snapshot (tricks reset), so a poll may or may not catch the 5-trick state.
+# The full 5-trick proof lives in the stream's hand.summary, checked below.
+assert seen_tricks >= 4, (seen_tricks, s["tricks"])
+print(f"e2e-web: scenario B hand 1 fully driven via HTTP ({seen_tricks} tricks observed, hand scored)")
 EOF
 
 kill "$APP_PID" 2>/dev/null || true
@@ -324,6 +328,9 @@ types = {e["type"] for e in events}
 assert "bid.made" in types and "card.played" in types and "trick.won" in types, types
 rej = [e for e in events if e["type"] == "action.rejected"]
 assert not rej, rej
+# hand 1 was fully played: its hand.summary must record all five tricks
+sums = [e["body"] for e in events if e["type"] == "hand.summary"]
+assert sums and sum(sums[0]["tricksNSE"]) == 5, [s["tricksNSE"] for s in sums]
 print(f"e2e-web: scenario B stream ok ({len(events)} events, no agent, no rejections)")
 EOF
 
