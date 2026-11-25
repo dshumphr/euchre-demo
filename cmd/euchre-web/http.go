@@ -359,7 +359,8 @@ func (a *app) handleEvents(w http.ResponseWriter, r *http.Request) {
 // ── input parsing ─────────────────────────────────────────────────────────
 
 // parseBidDecision parses a /api/bid decision: "order_up", "pass", or a suit
-// (code letter C/D/H/S or glyph ♣♦♥♠, case-insensitive).
+// (code letter C/D/H/S, full name clubs/diamonds/hearts/spades, or glyph
+// ♣♦♥♠, case-insensitive).
 func parseBidDecision(s string) (euchre.Call, error) {
 	s = strings.ToLower(strings.TrimSpace(s))
 	switch s {

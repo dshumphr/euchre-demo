@@ -370,6 +370,35 @@ func TestBiddingWrongTurnAndSuit(t *testing.T) {
 	}
 }
 
+// A round-2 call must accept the full suit name (the web UI and the proxenos
+// contract both send names, e.g. "clubs"), not only the letter code — and must
+// still reject the turned-down suit by name.
+func TestRound2CallAcceptsSuitName(t *testing.T) {
+	g := NewGame(1, South)
+	g.StartHand()
+	for s := range 4 {
+		g.hands[s] = []Card{mustCard(t, "9C"), mustCard(t, "TD"), mustCard(t, "JH"), mustCard(t, "QS"), mustCard(t, "AC")}
+	}
+	g.topCard = mustCard(t, "AH")
+	for _, s := range []Seat{West, North, East, South} {
+		if err := g.Bid(s, CallPass, false); err != nil {
+			t.Fatalf("pass by %s: %v", s, err)
+		}
+	}
+	if err := g.ValidateBid(West, Call("hearts"), false); err == nil {
+		t.Fatal("ValidateBid must reject the turned-down suit by name")
+	}
+	if err := g.Bid(West, Call("Clubs"), false); err != nil {
+		t.Fatalf("round-2 call by name: %v", err)
+	}
+	if tr, _ := g.Trump(); tr != Clubs {
+		t.Fatalf("trump = %s, want clubs", tr)
+	}
+	if g.Phase != PhasePlay {
+		t.Fatalf("phase = %v, want play after a round-2 call", g.Phase)
+	}
+}
+
 func TestBiddingSweptTwiceRedeals(t *testing.T) {
 	g := NewGame(1, South)
 	d0 := g.Dealer

@@ -37,16 +37,17 @@ func (s Suit) Code() string { return string("CDHS"[int(s)]) }
 // Glyph is the display symbol: ♣ ♦ ♠ ♥.
 func (s Suit) Glyph() string { return [4]string{"♣", "♦", "♥", "♠"}[int(s)] }
 
-// ParseSuit parses a one-character suit code.
+// ParseSuit parses a suit code (C, D, H or S) or full suit name
+// (clubs, diamonds, hearts, spades), case-insensitive.
 func ParseSuit(s string) (Suit, error) {
-	switch strings.ToUpper(s) {
-	case "C":
+	switch strings.ToUpper(strings.TrimSpace(s)) {
+	case "C", "CLUBS":
 		return Clubs, nil
-	case "D":
+	case "D", "DIAMONDS":
 		return Diamonds, nil
-	case "H":
+	case "H", "HEARTS":
 		return Hearts, nil
-	case "S":
+	case "S", "SPADES":
 		return Spades, nil
 	}
 	return 0, fmt.Errorf("bad suit %q", s)

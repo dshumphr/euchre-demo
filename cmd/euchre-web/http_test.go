@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http/httptest"
 	"strings"
 	"testing"
@@ -380,5 +381,87 @@ func TestSouthAwaitingGate(t *testing.T) {
 	}
 	if !a.southAwaiting("play") {
 		t.Error("southAwaiting(play) = false on south's play turn, want true")
+	}
+}
+
+// ── round-2 suit call by name ─────────────────────────────────────────────
+
+// driveSouth plays south's forced actions (pass/discard/play) until south is
+// prompted for a round-2 bid. On hand 1 south is dealer (4th bidder); a round-2
+// south bid is only reachable on hand 2 (dealer west), after all four pass
+// round 1 and the north/east bots pass round 2. Seed 6 reaches that state
+// deterministically with the turned-down card KS, so "clubs" is a legal call.
+func driveSouthToRound2Bid(t *testing.T, a *app) state {
+	t.Helper()
+	deadline := time.Now().Add(60 * time.Second)
+	lastActed := ""
+	plays := 0
+	for time.Now().Before(deadline) {
+		st := currentState(t, a)
+		if st.Hand == 2 && st.BidRound != nil && *st.BidRound == 2 &&
+			st.Bidding.Active && st.Bidding.PromptTo != nil && *st.Bidding.PromptTo == "south" {
+			return st
+		}
+		act, path, body := "", "", map[string]any(nil)
+		switch {
+		case (st.Phase == "bid1" || st.Phase == "bid2") && st.Bidding.Active &&
+			st.Bidding.PromptTo != nil && *st.Bidding.PromptTo == "south":
+			act, path, body = "bid-"+st.Phase+"-"+fmt.Sprint(st.Hand), "/api/bid", map[string]any{"decision": "pass"}
+		case st.Phase == "discard" && st.Turn != nil && *st.Turn == "south" && len(st.Legal) > 0:
+			act, path, body = "discard-"+fmt.Sprint(st.Hand), "/api/discard", map[string]any{"card": st.Legal[0]}
+		case st.Phase == "play" && st.Turn != nil && *st.Turn == "south" && len(st.Legal) > 0:
+			plays++
+			act, path, body = "play-"+fmt.Sprint(plays), "/api/play", map[string]any{"card": st.Legal[0]}
+		}
+		if act == "" {
+			lastActed = ""
+		} else if act != lastActed {
+			rec := post(a, path, body)
+			if rec.Code != 200 {
+				t.Fatalf("south %s: code %d (%s)", act, rec.Code, rec.Body)
+			}
+			lastActed = act
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	t.Fatal("south was never prompted for a round-2 bid")
+	return state{}
+}
+
+func TestRound2BidAcceptsSuitName(t *testing.T) {
+	a := testServer(t, 6)
+
+	st := driveSouthToRound2Bid(t, a)
+	if st.Phase != "bid2" {
+		t.Fatalf("phase = %q, want bid2", st.Phase)
+	}
+	if st.TopCard == nil || *st.TopCard != "K♠" {
+		t.Fatalf("turned-down card = %v, want K♠", st.TopCard)
+	}
+
+	// The exact request the web UI sends for a clubs Call button.
+	rec := post(a, "/api/bid", map[string]any{"decision": "clubs"})
+	if rec.Code != 200 {
+		t.Fatalf("round-2 bid \"clubs\": code %d (%s)", rec.Code, rec.Body)
+	}
+	st = decodeState(t, rec.Body.Bytes())
+	if st.Phase != "play" {
+		t.Fatalf("phase after clubs call = %q, want play", st.Phase)
+	}
+	if st.Trump == nil || *st.Trump != "♣" {
+		t.Fatalf("trump = %v, want ♣", st.Trump)
+	}
+	if st.Maker == nil || *st.Maker != "south" {
+		t.Fatalf("maker = %v, want south", st.Maker)
+	}
+	if st.SeatInfo["south"].LastBid == nil || *st.SeatInfo["south"].LastBid != "C" {
+		t.Errorf("south lastBid = %v, want wire code C", st.SeatInfo["south"].LastBid)
+	}
+
+	// Full names keep working right after a call set trump... the hand is in
+	// play now, so a bid must be rejected as out-of-phase instead.
+	rec = post(a, "/api/bid", map[string]any{"decision": "diamonds"})
+	if rec.Code != 409 {
+		t.Errorf("bid after trump set: code %d, want 409", rec.Code)
 	}
 }

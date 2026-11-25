@@ -10,6 +10,7 @@
   var SUITS = ['♣', '♦', '♥', '♠'];
   var SUIT_TO_NAME = { '♣': 'clubs', '♦': 'diamonds', '♥': 'hearts', '♠': 'spades' };
   var NAME_TO_SUIT = { clubs: '♣', diamonds: '♦', hearts: '♥', spades: '♠' };
+  var CODE_TO_SUIT = { C: '♣', D: '♦', H: '♥', S: '♠' };
   var RED = { '♥': true, '♦': true };
   var BID_TAG = { order_up: '↑ order-up', pass: '– pass', alone: '★ alone' };
 
@@ -56,7 +57,7 @@
   function bidTag(bid) {
     if (!bid) return '';
     if (BID_TAG[bid]) return '<span class="bid-tag">' + BID_TAG[bid] + '</span>';
-    var sym = NAME_TO_SUIT[bid] || (SUIT_TO_NAME[bid] ? bid : null);
+    var sym = NAME_TO_SUIT[bid] || CODE_TO_SUIT[bid] || (SUIT_TO_NAME[bid] ? bid : null);
     if (sym) return '<span class="bid-tag">call ' + sym + '</span>';
     return '<span class="bid-tag">' + esc(bid) + '</span>';
   }

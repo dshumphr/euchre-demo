@@ -306,7 +306,9 @@ func TestParseBidDecision(t *testing.T) {
 		{"♦", euchre.Call("D"), true},
 		{"banana", "", false},
 		{"", "", false},
-		{"hearts", "", false}, // full names are not part of the contract
+		{"hearts", euchre.Call("H"), true}, // full suit names are accepted
+		{"CLUBS", euchre.Call("C"), true},
+		{" spades ", euchre.Call("S"), true},
 	}
 	for _, c := range cases {
 		got, err := parseBidDecision(c.in)
